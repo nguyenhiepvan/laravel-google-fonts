@@ -10,19 +10,33 @@ use RuntimeException;
 
 class GoogleFonts
 {
+    protected Filesystem $filesystem;
+    protected string     $path;
+    protected bool       $inline;
+    protected bool       $fallback;
+    protected array      $fonts;
+    protected string     $userAgent;
+
     public function __construct(
-        protected Filesystem $filesystem,
-        protected string $path,
-        protected bool $inline,
-        protected bool $fallback,
-        protected string $userAgent,
-        protected array $fonts,
-    ) {
+        Filesystem $filesystem,
+        string $path,
+        bool $inline,
+        bool $fallback,
+        string $userAgent,
+        array $fonts
+    )
+    {
+        $this->userAgent  = $userAgent;
+        $this->fonts      = $fonts;
+        $this->fallback   = $fallback;
+        $this->inline     = $inline;
+        $this->path       = $path;
+        $this->filesystem = $filesystem;
     }
 
     public function load(string $font = 'default', bool $forceDownload = false): Fonts
     {
-        if (! isset($this->fonts[$font])) {
+        if (!isset($this->fonts[$font])) {
             throw new RuntimeException("Font `{$font}` doesn't exist");
         }
 
@@ -35,33 +49,33 @@ class GoogleFonts
 
             $fonts = $this->loadLocal($url);
 
-            if (! $fonts) {
+            if (!$fonts) {
                 return $this->fetch($url);
             }
 
             return $fonts;
         } catch (Exception $exception) {
-            if (! $this->fallback) {
+            if (!$this->fallback) {
                 throw $exception;
             }
 
-            return new Fonts(googleFontsUrl: $url);
+            return new Fonts($url);
         }
     }
 
     protected function loadLocal(string $url): ?Fonts
     {
-        if (! $this->filesystem->exists($this->path($url, 'fonts.css'))) {
+        if (!$this->filesystem->exists($this->path($url, 'fonts.css'))) {
             return null;
         }
 
         $localizedCss = $this->filesystem->get($this->path($url, 'fonts.css'));
 
         return new Fonts(
-            googleFontsUrl: $url,
-            localizedUrl: $this->filesystem->url($this->path($url, 'fonts.css')),
-            localizedCss: $localizedCss,
-            preferInline: $this->inline,
+            $url,
+            $this->filesystem->url($this->path($url, 'fonts.css')),
+            $localizedCss,
+            $this->inline
         );
     }
 
@@ -78,23 +92,23 @@ class GoogleFonts
 
             $this->filesystem->put(
                 $this->path($url, $localizedFontUrl),
-                Http::get($fontUrl)->body(),
+                Http::get($fontUrl)->body()
             );
 
             $localizedCss = str_replace(
                 $fontUrl,
                 $this->filesystem->url($this->path($url, $localizedFontUrl)),
-                $localizedCss,
+                $localizedCss
             );
         }
 
         $this->filesystem->put($this->path($url, 'fonts.css'), $localizedCss);
 
         return new Fonts(
-            googleFontsUrl: $url,
-            localizedUrl: $this->filesystem->url($this->path($url, 'fonts.css')),
-            localizedCss: $localizedCss,
-            preferInline: $this->inline,
+            $url,
+            $this->filesystem->url($this->path($url, 'fonts.css')),
+            $localizedCss,
+            $this->inline
         );
     }
 

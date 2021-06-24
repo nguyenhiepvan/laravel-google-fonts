@@ -7,41 +7,53 @@ use Illuminate\Support\HtmlString;
 
 class Fonts implements Htmlable
 {
+    protected string  $googleFontsUrl;
+    protected ?string $localizedUrl = null;
+    protected ?string $localizedCss = null;
+    protected bool    $preferInline = false;
+
     public function __construct(
-        protected string $googleFontsUrl,
-        protected ?string $localizedUrl = null,
-        protected ?string $localizedCss = null,
-        protected bool $preferInline = false,
+        string $googleFontsUrl,
+        ?string $localizedUrl = null,
+        ?string $localizedCss = null,
+        bool $preferInline = false
     ) {
+        $this->preferInline   = $preferInline;
+        $this->localizedCss   = $localizedCss;
+        $this->localizedUrl   = $localizedUrl;
+        $this->googleFontsUrl = $googleFontsUrl;
     }
 
     public function inline(): HtmlString
     {
-        if (! $this->localizedCss) {
+        if (!$this->localizedCss) {
             return $this->fallback();
         }
 
         return new HtmlString(<<<HTML
             <style>{$this->localizedCss}</style>
-        HTML);
+        HTML
+        );
     }
 
     public function link(): HtmlString
     {
-        if (! $this->localizedUrl) {
+        if (!$this->localizedUrl) {
             return $this->fallback();
         }
 
         return new HtmlString(<<<HTML
             <link href="{$this->localizedUrl}" rel="stylesheet" type="text/css">
-        HTML);
+        HTML
+        );
     }
 
     public function fallback(): HtmlString
     {
         return new HtmlString(<<<HTML
             <link href="{$this->googleFontsUrl}" rel="stylesheet" type="text/css">
-        HTML);
+        HTML
+        );
     }
 
     public function toHtml(): HtmlString
