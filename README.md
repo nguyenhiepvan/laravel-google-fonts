@@ -55,7 +55,7 @@ We highly appreciate you sending us a postcard from your hometown, mentioning wh
 You can install the package via composer:
 
 ```bash
-composer require spatie/laravel-google-fonts
+composer require nguyenhiep/laravel-google-fonts
 ```
 
 You may optionally publish the config file:
